@@ -1,31 +1,38 @@
+// src/routes/gatewayRoutes.js
 const express = require('express');
+const axios = require('axios');
 const router = express.Router();
 
-// Mock payment endpoint
-// Expects: POST /api/gateway/pay
-// Body: { amount: Number, cardNumber: String, expiry: String, cvv: String }
-router.post('/pay', (req, res) => {
-  const { amount, cardNumber, expiry, cvv } = req.body;
+// Payment Gateway endpoint
+router.post('/pay', async (req, res) => {
+  const { amount, cardNumber, expiry, cvv, userId, billId, purpose } = req.body;
 
-  if (!amount || !cardNumber || !expiry || !cvv) {
+  if (!amount || !cardNumber || !expiry || !cvv || !userId || !purpose) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  // Simulate random success/failure
-  const isSuccess = Math.random() > 0.1; // 90% success rate
-  const transactionRef = `MOCK-${Date.now()}`;
-
-  if (isSuccess) {
-    return res.status(200).json({
-      status: 'SUCCESS',
-      transactionRef,
-      message: 'Payment processed successfully',
+  try {
+    // 1 Forward payment request to Bank Service
+    const bankResponse = await axios.post(`${process.env.BANK_URL}/bank/validate-card`, {
+      amount,
+      cardNumber,
+      expiry,
+      cvv,
     });
-  } else {
-    return res.status(402).json({
+
+    // 2 Return the response to Payment Service
+    res.status(200).json({
+      status: 'PENDING',           // OTP verification needed
+      transactionRef: bankResponse.data.transactionRef,
+      otpSent: true,                // OTP triggered
+      message: 'OTP sent to user',
+    });
+  } catch (err) {
+    console.error('Bank validation failed:', err.message);
+    res.status(402).json({
       status: 'FAILED',
-      transactionRef,
-      message: 'Payment declined by bank',
+      transactionRef: `GATEWAY-${Date.now()}`,
+      message: 'Payment declined',
     });
   }
 });

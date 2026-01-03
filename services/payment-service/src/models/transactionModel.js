@@ -11,7 +11,7 @@ const transactionSchema = mongoose.Schema(
       enum: ['BILL_PAYMENT', 'TOP_UP'],
       required: true
     },
-    status: { type: String, enum: ['SUCCESS', 'FAILED'], required: true },
+    status: { type: String, enum: ['SUCCESS', 'FAILED', 'PENDING'], required: true },
     providerRef: { type: String }, // Reference ID from mock gateway
   },
   { timestamps: true }

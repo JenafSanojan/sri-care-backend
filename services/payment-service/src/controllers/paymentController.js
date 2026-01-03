@@ -2,67 +2,83 @@
 const Transaction = require('../models/transactionModel');
 const axios = require('axios');
 
-// Mock Payment Gateway
+// Mock Payment Gateway helper
 const mockPaymentGateway = async (amount, cardInfo) => {
   try {
     const response = await axios.post(`${process.env.GATEWAY_URL}/api/gateway/pay`, {
       amount,
-      ...cardInfo, // cardNumber, expiry, cvv
+      ...cardInfo, // cardNumber, expiry, cvv, userId, billId, purpose
     });
 
     return {
       status: response.data.status,
       providerRef: response.data.transactionRef,
+      otpSent: response.data.otpSent || false, // whether OTP was triggered
     };
   } catch (err) {
+    console.error('Payment Gateway error:', err.message);
     return {
       status: 'FAILED',
       providerRef: `mock_${Date.now()}`,
+      otpSent: false,
     };
   }
 };
 
-// @desc Initiate payment
+// @desc Initiate payment (bill or top-up)
 // @route POST /api/payments/pay
 // @access Private
 const initiatePayment = async (req, res) => {
-  const { billId, amount, purpose, cardNumber, expiry, cvv } = req.body;
-  const userId = req.userId; // trusted from gateway
+  const { billId, amount, cardNumber, expiry, cvv, purpose } = req.body;
+  const userId = req.userId;
 
-  // Validate purpose
-  if (!purpose || !['BILL_PAYMENT', 'TOP_UP'].includes(purpose)) {
-    return res.status(400).json({ message: 'Invalid or missing purpose' });
-  }
-
-  if (!userId || !amount || !cardNumber || !expiry || !cvv) {
+  if (!userId || !amount || !cardNumber || !expiry || !cvv || !purpose) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  // Call mock gateway
-  const paymentResult = await mockPaymentGateway(amount, { cardNumber, expiry, cvv });
+  try {
+    //  Call Payment Gateway (which calls the Bank Service)
+    const gatewayResponse = await mockPaymentGateway(amount, {
+      userId,
+      billId,
+      cardNumber,
+      expiry,
+      cvv,
+      purpose,
+    });
 
-  // Save transaction
-  const transaction = await Transaction.create({
-    userId,
-    billId,
-    amount,
-    purpose,
-    status: paymentResult.status,
-    providerRef: paymentResult.providerRef,
-  });
+    // Save transaction with PENDING status (waiting for OTP verification)
+    const transaction = await Transaction.create({
+      userId,
+      billId: billId || null,
+      amount,
+      purpose,
+      status: gatewayResponse.status || 'PENDING',
+      providerRef: gatewayResponse.transactionRef,
+    });
 
-  // Emit event (just console log here)
-  console.log('Event emitted: billPaid', {
-    billId,
-    userId,
-    amount,
-    status: transaction.status,
-  });
+    res.status(201).json({
+      message: `Payment ${gatewayResponse.status}`,
+      transaction,
+      otpSent: gatewayResponse.otpSent,
+    });
+  } catch (err) {
+    console.error('Payment error:', err.message);
 
-  res.status(201).json({
-    message: `Payment ${transaction.status}`,
-    transaction,
-  });
+    const transaction = await Transaction.create({
+      userId,
+      billId: billId || null,
+      amount,
+      purpose,
+      status: 'FAILED',
+      providerRef: `mock_${Date.now()}`,
+    });
+
+    res.status(500).json({
+      message: 'Payment FAILED',
+      transaction,
+    });
+  }
 };
 
 module.exports = { initiatePayment };
