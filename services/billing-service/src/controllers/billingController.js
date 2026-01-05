@@ -55,6 +55,7 @@ const markBillPaid = async (req, res) => {
     }
 
     const bill = await Bill.findById(billId);
+    console.log(bill);
     if (!bill) {
       return res.status(404).json({ message: 'Bill not found' });
     }
