@@ -5,7 +5,7 @@ const axios = require('axios');
 // Mock Payment Gateway helper 
 const mockPaymentGateway = async (amount, cardInfo) => {
   try {
-    const response = await axios.post(`${process.env.GATEWAY_URL}/api/gateway/pay`, {
+    const response = await axios.post(`${process.env.MOCK_PAYMENT_GATEWAY_URL}/api/gateway/pay`, {
       amount,
       ...cardInfo, // cardNumber, expiry, cvv, userId, billId, purpose
     });
@@ -111,7 +111,7 @@ const confirmPayment = async (req, res) => {
   try {
     // Verify OTP via Gateway
         const verify = await axios.post(
-      `${process.env.GATEWAY_URL}/api/gateway/verify-otp`,
+      `${process.env.MOCK_PAYMENT_GATEWAY_URL}/api/gateway/verify-otp`,
       { providerRef, otp },
       { validateStatus: () => true }
     );
@@ -147,7 +147,7 @@ const confirmPayment = async (req, res) => {
       }
 
       if (txn.purpose === 'TOP_UP') {
-        await axios.post(`${process.env.USER_URL}/api/wallet/topup`, {
+        await axios.post(`${process.env.GATEWAY_URL}/api/wallet/topup`, {
           userId: txn.userId,
           amount: txn.amount
         });
@@ -162,7 +162,7 @@ const confirmPayment = async (req, res) => {
       console.error('Downstream failed, attempting rollback:', businessErr.message);
 
       try {
-        await axios.post(`${process.env.GATEWAY_URL}/api/gateway/rollback`, {
+        await axios.post(`${process.env.MOCK_PAYMENT_GATEWAY_URL}/api/gateway/rollback`, {
           providerRef: txn.providerRef,
           amount: txn.amount
         });
