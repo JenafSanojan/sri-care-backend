@@ -141,7 +141,7 @@ const confirmPayment = async (req, res) => {
     try {
   // Business logic
       if (txn.purpose === 'BILL_PAYMENT') {
-        await axios.post(`${process.env.GATEWAY_URL}/api/billing/mark-paid`, {
+        await axios.post(`${process.env.BILLING_URL}/api/billing/mark-paid`, {
           billId: txn.billId
         });
       }
