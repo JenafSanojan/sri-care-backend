@@ -22,6 +22,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    walletBalance: {
+      type: Number,
+    },
+    voice: {
+      type: Number,
+    },
+    data: {
+      type: Number,
+    },
     isActive: {
       type: Boolean,
       default: true,
