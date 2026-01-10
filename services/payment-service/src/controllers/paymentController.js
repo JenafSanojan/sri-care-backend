@@ -147,7 +147,7 @@ const confirmPayment = async (req, res) => {
       }
 
       if (txn.purpose === 'TOP_UP') {
-        await axios.post(`${process.env.GATEWAY_URL}/api/wallet/topup`, {
+        await axios.post(`${process.env.USER_URL}/api/wallet/topup`, {
           userId: txn.userId,
           amount: txn.amount
         });

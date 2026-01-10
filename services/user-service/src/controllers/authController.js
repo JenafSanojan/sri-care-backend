@@ -23,6 +23,9 @@ const registerUser = async (req, res) => {
     email,
     mobileNumber,
     passwordHash: password,
+    walletBalance: 0,
+    voice: 0,
+    data: 0
   });
 
   if (user) {
@@ -51,6 +54,9 @@ const authUser = async (req, res) => {
       name: user.name,
       email: user.email,
       mobileNumber: user.mobileNumber,
+      walletBalance: user.walletBalance,
+      voice: user.voice,
+      data: user.data,
       token: generateToken(user._id),
     });
   } else {
