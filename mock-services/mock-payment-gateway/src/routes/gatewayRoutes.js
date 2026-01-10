@@ -5,7 +5,7 @@ const router = express.Router();
 
 // Payment Gateway endpoint
 router.post('/pay', async (req, res) => {
-  const { amount, cardNumber, expiry, cvv, userId, billId, purpose } = req.body;
+  const { amount, cardNumber, expiry, cvv, userId, billId, purpose, data, voice } = req.body;
 
   if (!amount || !cardNumber || !expiry || !cvv || !userId || !purpose) {
     return res.status(400).json({ message: 'Missing required fields' });

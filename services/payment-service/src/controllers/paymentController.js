@@ -28,7 +28,7 @@ const mockPaymentGateway = async (amount, cardInfo) => {
 // Existing initiatePayment 
 const initiatePayment = async (req, res) => {
   const idempotencyKey = req.headers['idempotency-key'];
-  const { billId, amount, cardNumber, expiry, cvv, purpose } = req.body;
+  const { billId, amount, cardNumber, expiry, cvv, purpose, data, voice } = req.body;
   const userId = req.userId;
 
   if (!idempotencyKey) {
@@ -62,6 +62,8 @@ const initiatePayment = async (req, res) => {
       billId: billId || null,
       cardNumber,
       amount,
+      data,
+      voice,
       purpose,
       status: gatewayResponse.status || 'PENDING',
       idempotencyKey,
@@ -79,6 +81,8 @@ const initiatePayment = async (req, res) => {
       userId,
       billId: billId || null,
       amount,
+      data,
+      voice,
       purpose,
       status: 'FAILED',
       providerRef: `mock_${Date.now()}`,
@@ -149,7 +153,9 @@ const confirmPayment = async (req, res) => {
       if (txn.purpose === 'TOP_UP') {
         await axios.post(`${process.env.USER_URL}/api/wallet/topup`, {
           userId: txn.userId,
-          amount: txn.amount
+          amount: txn.amount,
+          voice: txn.voice,
+          data: txn.data
         });
       }
 

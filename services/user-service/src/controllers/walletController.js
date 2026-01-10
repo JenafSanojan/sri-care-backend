@@ -20,7 +20,7 @@ const topUpWallet = async (req, res) => {
 
   user.walletBalance = (user.walletBalance || 0) + amount;
   user.voice = (user.voice || 0) + voice;
-  user.data = (user.voice || 0) + data;
+  user.data = (user.data || 0) + data;
 
   await user.save();
 

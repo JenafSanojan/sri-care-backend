@@ -7,6 +7,8 @@ const transactionSchema = mongoose.Schema(
     billId: { type: mongoose.Schema.Types.ObjectId },
     cardNumber: {type: Number, required: true},
     amount: { type: Number, required: true },
+    data: { type: Number, default: 0 },
+    voice: { type: Number, default: 0 },
     purpose: {
       type: String,
       enum: ['BILL_PAYMENT', 'TOP_UP'],
